@@ -23,14 +23,14 @@ services:
     volumes:
       - nexus_data:/nexus-data
 
-  build:
-    build:
-      context: ./build
-      dockerfile: Dockerfile
-    container_name: build
-    ports:
-      - "8000:8000"
-    restart: unless-stopped
+#  build:
+#    build:
+#      context: ./build
+#      dockerfile: Dockerfile
+#    container_name: build
+#    ports:
+#      - "8000:8000"
+#    restart: unless-stopped
 
 volumes:
   gitlab_config:
