@@ -1,0 +1,25 @@
+stages:
+  - build
+  - push
+
+variables:
+  DOCKER_IMAGE: "my-go-app"
+
+build:
+  stage: build
+  script:
+    - docker build -t "$DOCKER_IMAGE:$CI_COMMIT_TAG" .
+  only:
+    - tags
+  tags:
+    - docker
+
+push:
+  stage: push
+  script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login nexus.local:8082 -u "$CI_REGISTRY_USER" --password-stdin
+    - docker push "$DOCKER_IMAGE:$CI_COMMIT_TAG"
+  only:
+    - tags
+  tags:
+    - docker
