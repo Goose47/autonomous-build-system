@@ -4,8 +4,8 @@ stages:
 variables:
   DOCKER_IMAGE: "my-go-app"
 
-push:
-  stage: push
+build-and-push:
+  stage: build-and-push
   image: docker:latest
   services:
     - docker:dind
