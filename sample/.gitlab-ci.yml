@@ -9,10 +9,7 @@ build-and-push:
   image: docker:latest
   services:
     - name: docker:dind
-      command: ["--insecure-registry=$REGISTRY_HOST_PORT"]
-  before_script:
-    - REGISTRY_HOST_PORT=$(echo "$DOCKER_REGISTRY_URL" | awk -F[/:] '{print $4}')
-    - echo "Using insecure registry: $REGISTRY_HOST_PORT"
+      command: ["--insecure-registry=nexus:"]
   script:
     - echo "$DOCKER_REGISTRY_PASSWORD" | docker login "$DOCKER_REGISTRY_URL" --username "$DOCKER_REGISTRY_USER" --password-stdin
     - docker push "$DOCKER_IMAGE:$CI_COMMIT_TAG"
