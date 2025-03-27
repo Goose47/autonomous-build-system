@@ -1,4 +1,4 @@
-- name: Wait for GitLab to be ready
+- name: Set up docker compose
   tasks:
     - name: "setup docker compose?"
       register: docker ps
