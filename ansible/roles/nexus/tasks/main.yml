@@ -1,5 +1,6 @@
 - name: Wait for Nexus to be ready
-  command: echo nexus is ready
+  debug:
+    msg: echo nexus is ready
 # todo: create nexus repositories.
 
 

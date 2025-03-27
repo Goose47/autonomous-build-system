@@ -1,4 +1,5 @@
 - name: Wait for GitLab to be ready
-  command: echo gitlab is ready
+  debug:
+    msg: echo gitlab is ready
 
 # todo: do smth?

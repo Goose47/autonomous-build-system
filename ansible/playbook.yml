@@ -1,11 +1,8 @@
 - name: Setup GitLab, GitLab Runner, and Nexus on local VPS
   hosts: localhost
   become: true
-  tasks:
-    - name: "setup docker compose?"
-      shell: |
-        echo $USER && docker ps
   roles:
+    - docker
     - gitlab
     - gitlab-runner
     - nexus

@@ -1,0 +1,6 @@
+- name: Wait for GitLab to be ready
+  tasks:
+    - name: "setup docker compose?"
+      register: docker ps
+      debug:
+        msg: $USER

@@ -1,5 +1,6 @@
 - name: Wait for GitLab Runner to be ready
-  command: echo gitlab-runner is ready
+  debug:
+    msg: echo gitlab-runner is ready
 # todo: obtain gitlab token and register runner.
 # todo: add network to config.toml.
 
