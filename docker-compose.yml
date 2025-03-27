@@ -3,6 +3,7 @@ version: '3.9'
 services:
   gitlab:
     image: gitlab/gitlab-ce:latest
+    hostname: gitlab
     container_name: gitlab
     restart: unless-stopped
     ports:
@@ -35,15 +36,6 @@ services:
       - nexus_data:/nexus-data
     networks:
       - abs
-
-#  build:
-#    build:
-#      context: ./build
-#      dockerfile: Dockerfile
-#    container_name: build
-#    ports:
-#      - "8000:8000"
-#    restart: unless-stopped
 
 networks:
   abs:
