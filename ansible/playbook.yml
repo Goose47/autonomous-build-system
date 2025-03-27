@@ -1,0 +1,8 @@
+- name: Setup GitLab, GitLab Runner, and Nexus on local VPS
+  hosts: localhost
+  become: true
+  command: echo $USER && docker ps
+  roles:
+    - gitlab
+    - gitlab-runner
+    - nexus

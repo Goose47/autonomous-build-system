@@ -1,0 +1,25 @@
+- name: Wait for GitLab Runner to be ready
+  command: echo gitlab-runner is ready
+# todo: obtain gitlab token and register runner.
+# todo: add network to config.toml.
+
+#- name: Wait for GitLab to be ready
+#  wait_for:
+#    host: "localhost"
+#    port: 8081
+#    timeout: 300
+#
+#- name: Register GitLab Runner
+#  shell: |
+#    docker exec -it gitlab-runner gitlab-runner register --non-interactive
+#    --url "http://localhost/"
+#    --registration-token "YOUR_GITLAB_TOKEN"
+#    --executor "docker"
+#    --docker-image "docker:24.0.5"
+#    --docker-network-mode "abs_abs"
+#    --description "My Runner"
+#    --tag-list "docker"
+#    --run-untagged="false"
+#    --locked="false"
+#  args:
+#    creates: /etc/gitlab-runner/config.toml
