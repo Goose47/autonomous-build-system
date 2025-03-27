@@ -2,18 +2,40 @@ stages:
   - build-and-push
 
 variables:
-  DOCKER_IMAGE: "my-go-app"
+  DOCKER_IMAGE: "nexus:8083/my-go-app"
+  DOCKER_TLS_CERTDIR: ""
+  GO_PROXY_URL: "http://nexus:8081/repository/go-proxy/"
 
 build-and-push:
   stage: build-and-push
-  image: docker:latest
+  image: docker:24.0.5
   services:
-    - name: docker:dind
-      command: ["--insecure-registry=nexus:"]
+    - name: docker:24.0.5-dind
+      command: [
+        "--tls=false",
+        "--insecure-registry=nexus:8083",
+        "--insecure-registry=http://nexus:8084",
+        "--registry-mirror=http://nexus:8084",
+      ]
   script:
+    # Get nexus IP.
+    - NEXUS_IP=$(getent hosts nexus | awk '{ print $1 }')
+    - echo "Resolved nexus IP:$NEXUS_IP"
+
+    # Log in to docker.
     - echo "$DOCKER_REGISTRY_PASSWORD" | docker login "$DOCKER_REGISTRY_URL" --username "$DOCKER_REGISTRY_USER" --password-stdin
+
+    # Build docker image.
+    - |
+      docker build \
+      --add-host="nexus:$NEXUS_IP" \
+      --build-arg GOPROXY=$GO_PROXY_URL \
+      -t "$DOCKER_IMAGE:$CI_COMMIT_TAG" .
+
+    # Push built image to registry.
     - docker push "$DOCKER_IMAGE:$CI_COMMIT_TAG"
-    - docker build -t "$DOCKER_IMAGE:$CI_COMMIT_TAG" .
+    - docker tag "$DOCKER_IMAGE:$CI_COMMIT_TAG" "$DOCKER_IMAGE:latest"
+    - docker push "$DOCKER_IMAGE:latest"
   only:
     - tags
   tags:
