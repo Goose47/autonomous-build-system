@@ -1,26 +1,61 @@
-- name: Wait for GitLab Runner to be ready
-  debug:
-    msg: echo gitlab-runner is ready
 # todo: obtain gitlab token and register runner.
 # todo: add network to config.toml.
 
-#- name: Wait for GitLab to be ready
-#  wait_for:
-#    host: "localhost"
-#    port: 8081
-#    timeout: 300
-#
-#- name: Register GitLab Runner
-#  shell: |
-#    docker exec -it gitlab-runner gitlab-runner register --non-interactive
-#    --url "http://localhost/"
-#    --registration-token "YOUR_GITLAB_TOKEN"
-#    --executor "docker"
-#    --docker-image "docker:24.0.5"
-#    --docker-network-mode "abs_abs"
-#    --description "My Runner"
-#    --tag-list "docker"
-#    --run-untagged="false"
-#    --locked="false"
-#  args:
-#    creates: /etc/gitlab-runner/config.toml
+- name: Wait for GitLab to be ready
+  wait_for:
+    host: "localhost"
+    port: 8081
+    timeout: 300
+
+- name: Get initial root password from GitLab container
+  command: docker exec gitlab cat /etc/gitlab/initial_root_password | awk '/Password:/ {print $2}'
+  register: gitlab_root_password
+
+- name: Authenticate and get Admin Access Token
+  uri:
+    url: "localhost:8081/api/v4/session"
+    method: POST
+    body_format: json
+    body:
+      login: "root"
+      password: "{{ gitlab_root_password.stdout }}"
+    headers:
+      Content-Type: "application/json"
+  register: gitlab_auth_response
+
+- name: Set GitLab admin token
+  set_fact:
+    gitlab_admin_token: "{{ gitlab_auth_response.json.private_token }}"
+
+- name: Get GitLab Runner registration token
+  uri:
+    url: "localhost:8081/api/v4/runners"
+    method: POST
+    headers:
+      PRIVATE-TOKEN: "{{ gitlab_admin_token }}"
+    body_format: json
+    body:
+      description: "global-runner"
+      locked: false
+      run_untagged: true
+      tag_list: "docker,global"
+    return_content: yes
+  register: gitlab_runner_response
+
+- name: Set runner registration token
+  set_fact:
+    gitlab_runner_registration_token: "{{ gitlab_runner_response.json.registration_token }}"
+
+- name: Register GitLab Runner
+  shell: |    
+    docker exec gitlab-runner gitlab-runner register --non-interactive
+    --url "http://localhost:8081"
+    --registration-token {{ gitlab_runner_registration_token }}
+    --executor "docker"
+    --docker-image "ubuntu:latest"
+    --docker-network-mode "abs_abs"
+    --description "Global Runner"
+    --tag-list "docker"
+    --run-untagged="false"
+    --locked="false"
+  changed_when: true

@@ -1,0 +1,12 @@
+{
+  "name": "go-proxy",
+  "online": true,
+  "storage": {
+    "blobStoreName": "default",
+    "strictContentTypeValidation": true
+  },
+  "proxy": {
+    "remoteUrl": "https://proxy.golang.org",
+    "contentMaxAge": 1440
+  }
+}

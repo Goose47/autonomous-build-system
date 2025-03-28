@@ -1,6 +1,2 @@
-- name: Set up docker compose
-  tasks:
-    - name: "setup docker compose?"
-      register: docker ps
-      debug:
-        msg: $USER
+- name: Run docker compose
+  command: docker compose -f ../docker-compose.yml up -d
