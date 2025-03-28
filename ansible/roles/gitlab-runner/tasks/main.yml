@@ -7,6 +7,15 @@
     port: 8081
     timeout: 300
 
+- name: Wait for GitLab container to be healthy
+  docker_container:
+    name: gitlab
+    state: started
+  register: gitlab_container_status
+  until: gitlab_container_status.container.State.Health.Status == 'healthy'
+  retries: 15
+  delay: 10
+
 - name: Get initial root password from GitLab container
   command: docker exec gitlab cat /etc/gitlab/initial_root_password | awk '/Password:/ {print $2}'
   register: gitlab_root_password
