@@ -1,47 +1,40 @@
-# todo: obtain gitlab token and register runner.
-# todo: add network to config.toml.
-
 - name: Wait for GitLab to be ready
   wait_for:
     host: "localhost"
     port: 8081
     timeout: 300
 
-- name: Wait for GitLab container to be healthy
-  docker_container:
-    name: gitlab
-    state: started
-  register: gitlab_container_status
-  until: gitlab_container_status.container.State.Health.Status == 'healthy'
-  retries: 15
+- name: Check if GitLab is ready by curling the endpoint
+  uri:
+    url: "http://localhost:8081"
+    timeout: 30
+  register: gitlab_ready
+  until: gitlab_ready.status != "502"
+  retries: 30
   delay: 10
+  failed_when: false
 
 - name: Get initial root password from GitLab container
-  command: docker exec gitlab cat /etc/gitlab/initial_root_password | awk '/Password:/ {print $2}'
+  shell: |
+    docker exec gitlab cat /etc/gitlab/initial_root_password | awk '/Password:/ {print $2}'
+  args:
+    executable: /bin/bash
   register: gitlab_root_password
+  changed_when: false
 
-- name: Authenticate and get Admin Access Token
-  uri:
-    url: "localhost:8081/api/v4/session"
-    method: POST
-    body_format: json
-    body:
-      login: "root"
-      password: "{{ gitlab_root_password.stdout }}"
-    headers:
-      Content-Type: "application/json"
-  register: gitlab_auth_response
-
-- name: Set GitLab admin token
-  set_fact:
-    gitlab_admin_token: "{{ gitlab_auth_response.json.private_token }}"
+- name: Generate root user access token in GitLab container
+  command: >
+    docker exec gitlab gitlab-rails runner "token = User.find_by_username('root').personal_access_tokens.create(scopes: ['api'], name: 'Ansible token', expires_at: 365.days.from_now); token.save!; puts token.token"
+  register: gitlab_access_token
+  changed_when: false
+  become: true
 
 - name: Get GitLab Runner registration token
   uri:
-    url: "localhost:8081/api/v4/runners"
+    url: "http://localhost:8081/api/v4/runners/reset_registration_token"
     method: POST
     headers:
-      PRIVATE-TOKEN: "{{ gitlab_admin_token }}"
+      PRIVATE-TOKEN: "{{ gitlab_access_token.stdout }}"
     body_format: json
     body:
       description: "global-runner"
@@ -49,22 +42,38 @@
       run_untagged: true
       tag_list: "docker,global"
     return_content: yes
+    status_code: 201
   register: gitlab_runner_response
+
+- name: Get GitLab Runner authentication token
+  uri:
+    url: "http://localhost:8081/api/v4/user/runners"
+    method: POST
+    headers:
+      PRIVATE-TOKEN: "{{ gitlab_access_token.stdout }}"
+    body_format: json
+    body:
+      description: "global-runner"
+      runner_type: "instance_type"
+      locked: false
+      run_untagged: true
+      tag_list: "docker,global"
+    return_content: yes
+    status_code: 201
+  register: gitlab_runner_auth_response
+
 
 - name: Set runner registration token
   set_fact:
-    gitlab_runner_registration_token: "{{ gitlab_runner_response.json.registration_token }}"
+    gitlab_runner_registration_token: "{{ gitlab_runner_auth_response.json.token }}"
 
 - name: Register GitLab Runner
-  shell: |    
-    docker exec gitlab-runner gitlab-runner register --non-interactive
-    --url "http://localhost:8081"
-    --registration-token {{ gitlab_runner_registration_token }}
-    --executor "docker"
-    --docker-image "ubuntu:latest"
-    --docker-network-mode "abs_abs"
-    --description "Global Runner"
-    --tag-list "docker"
-    --run-untagged="false"
-    --locked="false"
+  shell: |
+    docker exec gitlab-runner gitlab-runner register --non-interactive \
+    --url "http://gitlab" \
+    --token {{ gitlab_runner_registration_token }} \
+    --executor "docker" \
+    --docker-image "ubuntu:latest" \
+    --docker-network-mode "abs_abs" \
+    --description "Global Runner" \
   changed_when: true

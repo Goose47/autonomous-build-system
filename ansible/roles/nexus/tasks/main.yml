@@ -35,6 +35,7 @@
     method: POST
     user: "admin"
     password: "{{ nexus_admin_password.stdout }}"
+    force_basic_auth: yes
     body_format: json
     body: "{{ lookup('file', item.file) }}"
   loop:
