@@ -4,6 +4,14 @@
     port: 8081
     timeout: 300
 
+- name: Wait for GitLab container to be healthy
+  shell: docker inspect --format='{{.State.Health.Status}}' gitlab
+  register: gitlab_health
+  until: gitlab_health.stdout == "healthy"
+  retries: 30
+  delay: 10
+  failed_when: false
+
 - name: Check if GitLab is ready by curling the endpoint
   uri:
     url: "http://localhost:8081"
