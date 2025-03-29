@@ -1,17 +1,26 @@
 {
-  "name": "docker-proxy",
-  "online": true,
-  "storage": {
-    "blobStoreName": "default",
-    "strictContentTypeValidation": true
-  },
-  "proxy": {
-    "remoteUrl": "https://registry-1.docker.io",
-    "contentMaxAge": 1440
-  },
   "docker": {
     "v1Enabled": true,
     "forceBasicAuth": false,
     "httpPort": 8084
+  },
+  "dockerProxy": {},
+  "httpClient": {
+    "blocked": false,
+    "autoBlock": false
+  },
+  "name": "docker-proxy",
+  "negativeCache": {
+    "enabled": false,
+    "timeToLive": 0
+  },
+  "online": true,
+  "proxy": {
+    "remoteUrl": "https://registry-1.docker.io",
+    "contentMaxAge": 1440
+  },
+  "storage": {
+    "blobStoreName": "default",
+    "strictContentTypeValidation": true
   }
 }
