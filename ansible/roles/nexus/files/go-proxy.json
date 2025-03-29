@@ -11,7 +11,8 @@
   "online": true,
   "proxy": {
     "remoteUrl": "https://proxy.golang.org",
-    "contentMaxAge": 1440
+    "contentMaxAge": 1440,
+    "metadataMaxAge": 1440
   },
   "storage": {
     "blobStoreName": "default",

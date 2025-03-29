@@ -4,7 +4,9 @@
     "forceBasicAuth": false,
     "httpPort": 8084
   },
-  "dockerProxy": {},
+  "dockerProxy": {
+    "indexType": "HUB"
+  },
   "httpClient": {
     "blocked": false,
     "autoBlock": false
@@ -17,7 +19,8 @@
   "online": true,
   "proxy": {
     "remoteUrl": "https://registry-1.docker.io",
-    "contentMaxAge": 1440
+    "contentMaxAge": 1440,
+    "metadataMaxAge": 1440
   },
   "storage": {
     "blobStoreName": "default",
