@@ -5,7 +5,7 @@
     timeout: 300
 
 - name: Wait for GitLab container to be healthy
-  shell: docker inspect --format='{{.State.Health.Status}}' gitlab
+  shell: docker inspect --format="{{'{{'}}.State.Health.Status}}" gitlab
   register: gitlab_health
   until: gitlab_health.stdout == "healthy"
   retries: 30
