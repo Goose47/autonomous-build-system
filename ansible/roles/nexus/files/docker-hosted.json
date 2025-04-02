@@ -9,6 +9,6 @@
   "docker": {
     "v1Enabled": true,
     "httpPort": 8083,
-    "forceBasicAuth": false
+    "forceBasicAuth": true
   }
 }

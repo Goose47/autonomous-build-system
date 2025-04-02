@@ -1,57 +1,9 @@
-- name: Wait for GitLab to be ready
-  wait_for:
-    host: "localhost"
-    port: 8081
-    timeout: 300
-
-- name: Wait for GitLab container to be healthy
-  shell: docker inspect --format="{{'{{'}}.State.Health.Status}}" gitlab
-  register: gitlab_health
-  until: gitlab_health.stdout == "healthy"
-  retries: 30
-  delay: 10
-  failed_when: false
-
-- name: Check if GitLab is ready by curling the endpoint
-  uri:
-    url: "http://localhost:8081"
-    timeout: 30
-  register: gitlab_ready
-  until: gitlab_ready.status != "502"
-  retries: 30
-  delay: 10
-  failed_when: false
-
-- name: Get initial root password from GitLab container
-  shell: |
-    docker exec gitlab cat /etc/gitlab/initial_root_password | awk '/Password:/ {print $2}'
-  args:
-    executable: /bin/bash
-  register: gitlab_root_password
-  changed_when: false
-
 - name: Generate root user access token in GitLab container
   command: >
     docker exec gitlab gitlab-rails runner "token = User.find_by_username('root').personal_access_tokens.create(scopes: ['api'], name: 'Ansible token', expires_at: 365.days.from_now); token.save!; puts token.token"
   register: gitlab_access_token
   changed_when: false
   become: true
-
-- name: Get GitLab Runner registration token
-  uri:
-    url: "http://localhost:8081/api/v4/runners/reset_registration_token"
-    method: POST
-    headers:
-      PRIVATE-TOKEN: "{{ gitlab_access_token.stdout }}"
-    body_format: json
-    body:
-      description: "global-runner"
-      locked: false
-      run_untagged: true
-      tag_list: "docker,global"
-    return_content: yes
-    status_code: 201
-  register: gitlab_runner_response
 
 - name: Get GitLab Runner authentication token
   uri:
@@ -68,20 +20,16 @@
       tag_list: "docker,global"
     return_content: yes
     status_code: 201
-  register: gitlab_runner_auth_response
-
-
-- name: Set runner registration token
-  set_fact:
-    gitlab_runner_registration_token: "{{ gitlab_runner_auth_response.json.token }}"
+  register: gitlab_runner_auth_token
 
 - name: Register GitLab Runner
   shell: |
     docker exec gitlab-runner gitlab-runner register --non-interactive \
     --url "http://gitlab" \
-    --token {{ gitlab_runner_registration_token }} \
+    --token {{ gitlab_runner_auth_token.stdout }} \
     --executor "docker" \
     --docker-image "ubuntu:latest" \
+    --docker-privileged \
     --docker-network-mode "abs_abs" \
-    --description "Global Runner" \
+    --description "Global Runner"
   changed_when: true

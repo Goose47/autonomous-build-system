@@ -17,7 +17,7 @@
     password: "{{ nexus_admin_password.stdout }}"
     force_basic_auth: yes
     return_content: yes
-  register: nexus_repos
+  register: default_repos_list
 
 - name: Delete default repositories
   uri:
@@ -27,7 +27,7 @@
     password: "{{ nexus_admin_password.stdout }}"
     force_basic_auth: yes
     status_code: [ 204, 404 ]
-  loop: "{{ nexus_repos.json }}"
+  loop: "{{ default_repos_list.json }}"
 
 - name: Create Nexus repositories
   uri:
