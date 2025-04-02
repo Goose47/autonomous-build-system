@@ -1,0 +1,35 @@
+- name: Generate root user access token in GitLab container
+  command: >
+    docker exec gitlab gitlab-rails runner "token = User.find_by_username('root').personal_access_tokens.create(scopes: ['api'], name: 'Ansible token', expires_at: 365.days.from_now); token.save!; puts token.token"
+  register: gitlab_access_token
+  changed_when: false
+  become: true
+
+- name: Get GitLab Runner authentication token
+  uri:
+    url: "http://localhost:8081/api/v4/user/runners"
+    method: POST
+    headers:
+      PRIVATE-TOKEN: "{{ gitlab_access_token.stdout }}"
+    body_format: json
+    body:
+      description: "global-runner"
+      runner_type: "instance_type"
+      locked: false
+      run_untagged: true
+      tag_list: "docker,global"
+    return_content: yes
+    status_code: 201
+  register: gitlab_runner_auth_token
+
+- name: Register GitLab Runner
+  shell: |
+    docker exec gitlab-runner gitlab-runner register --non-interactive \
+    --url "http://gitlab" \
+    --token {{ gitlab_runner_auth_token.stdout }} \
+    --executor "docker" \
+    --docker-image "ubuntu:latest" \
+    --docker-privileged \
+    --docker-network-mode "abs_abs" \
+    --description "Global Runner"
+  changed_when: true

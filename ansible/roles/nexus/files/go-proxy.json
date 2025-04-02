@@ -1,0 +1,21 @@
+{
+  "httpClient": {
+    "blocked": false,
+    "autoBlock": false
+  },
+  "name": "go-proxy",
+  "negativeCache": {
+    "enabled": false,
+    "timeToLive": 0
+  },
+  "online": true,
+  "proxy": {
+    "remoteUrl": "https://proxy.golang.org",
+    "contentMaxAge": 1440,
+    "metadataMaxAge": 1440
+  },
+  "storage": {
+    "blobStoreName": "default",
+    "strictContentTypeValidation": true
+  }
+}

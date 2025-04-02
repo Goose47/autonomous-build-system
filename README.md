@@ -26,32 +26,23 @@ go proxy repositories for caching project dependencies.
 
 ## Getting started
 
-### Run the system
- - ``docker compose up -d``
- - Obtain nexus password, created in nexus container
- - Change the gitlab root user password 
-
-### Register gitlab runner
- - ``docker exec -it gitlab-runner gitlab-runner register``
- - Paste token obtained in gitlab Admin area -> runners
-
-#### Add runner to custom network (abs_abs in this case): <br>
-   inside gitlab-runner <br> 
-``/etc/gitlab-runner/config.toml``:
-```toml
-[runners.docker]
-    ...
-    network_mode = "abs_abs"
-    ...
+### Run ansible playbook
 ```
+cd ansible && ansible-playbook -i inventory/hosts.ini playbook.yml
+```
+The playbook will
+ - Start docker containers
+ - Wait until Gitlab is ready
+ - Obtain Gitlab Runner authentication token
+ - Register Gitlab Runner
+ - Remove default Nexus repositories
+ - Create docker hosted, docker proxy and go proxy Nexus repositories
 
-### Create sample project
+### Create a project
  - Add new project to gitlab
  - Add Dockerfile
- - Add CI\CD pipeline
-
-### Configure nexus repositories
- - Add docker hosted repository to store built images.
- - Add docker proxy repository to cache images from docker hub.
- - Add go proxy repository to cache go dependencies from different sources.
-            
+ - Add CI\CD pipeline ``sample/.gitlab-ci.yml``
+ - Create CI\CD variables:
+   - ``DOCKER_REGISTRY_URL``
+   - ``DOCKER_REGISTRY_USER``
+   - ``DOCKER_REGISTRY_PASSWORD``
